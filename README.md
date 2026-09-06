@@ -46,10 +46,58 @@ Full methodology, formalization, and discussion are in [`paper/`](./paper) and [
 
 ## Architecture
 
+The system implements four sequential stages — Data Preparation, Two-Stage Retrieval, Graph-Aware Reranking, and Answer Synthesis — forming a precision-oriented "Information Funnel":
+
+```mermaid
+flowchart TD
+    Q[User Query] --> S1
+
+    subgraph DP["1 · Data Preparation"]
+        direction LR
+        KGraw["Filtered KG\nsubgraphs"] --> Chunks["Hybrid Text–KG\nchunks + metadata"]
+    end
+
+    subgraph EI["2 · Embedding & Indexing"]
+        direction LR
+        Embed["mxbai-embed-large"] --> VecIdx[("Vector Index\n(cosine similarity)")]
+    end
+
+    Chunks --> Embed
+
+    subgraph TSR["3 · Two-Stage Retrieval  (Information Funnel)"]
+        direction TB
+        S1["Stage 1: Vector Retrieval\n(top-K1 = 15)"] --> S2["Stage 2: KG Expansion\n(1-hop neighbors)"]
+        S2 --> S3["Graph-Aware Reranking\n(BGE-Large cross-encoder,\ntop-K2 = 6)"]
+        S3 --> CTX["Context Construction\n(metadata tracking → R_final)"]
+    end
+
+    VecIdx --> S1
+
+    subgraph AS["4 · Answer Synthesis"]
+        direction LR
+        Prompt["Context-only prompt"] --> LLM["LLaMA3-8B"]
+    end
+
+    CTX --> Prompt
+
+    subgraph SF["Supporting Facts Extraction"]
+        direction LR
+        Dedup["Deduplication"] --> Top4["Top-4 facts"]
+    end
+
+    LLM --> Dedup
+    LLM --> Out["Final Output:\nAnswer + Supporting Facts"]
+    Top4 --> Out
 ```
-Query → Vector Retrieval (top-K1) → KG Expansion (1-hop) → Reranking (top-K2)
-      → Context Construction → LLM Answer Synthesis → Supporting Fact Dedup → Output
-```
+
+**Selection pressure ρ ≈ 0.82** — the funnel filters roughly 82% of candidates between initial retrieval+expansion (~55 candidates) and the final context (6 documents, top-4 supporting facts).
+
+<details>
+<summary>Prefer a static image instead of Mermaid?</summary>
+
+Mermaid diagrams render automatically on GitHub — no extra setup needed. If you'd rather ship a PNG/SVG (e.g. for the paper or a slide), export this block with the [Mermaid Live Editor](https://mermaid.live) or `mmdc` (`@mermaid-js/mermaid-cli`) and drop it in a `docs/` or `assets/` folder, then embed it with `![architecture](./assets/architecture.png)`.
+
+</details>
 
 ## Getting started
 
