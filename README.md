@@ -161,7 +161,7 @@ If you use this work, please cite:
 ```bibtex
 @misc{chinchakandi2025kgrag,
   title  = {Enhancing Retrieval-Augmented Generation via Knowledge Graphs},
-  author = {Chinchakandi, Sneha and Mellikeri, Yashaswini and Khatawate, Mahesh and Annigeri, Amogh and S M, Meena},
+  author = {Sneha Chinchakandi, Yashaswini Mellikeri, Mahesh Khatawate, Amogh Annigeri, Meena S M},
   year   = {2025},
   note   = {KLE Technological University}
 }
